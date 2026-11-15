@@ -131,13 +131,20 @@ func doPreparationForRegistries() error {
 }
 
 func doPreparationForGroupMembership() error {
-	if hyperv.IsHyperVAdminsGroupMember() {
+	// IsCurrentUserInHyperVAdminGroup checks the group database directly rather
+	// than the process token, so it works in contexts where the token-based check
+	// (IsHyperVAdminsGroupMember) fails due to impersonation or missing profile.
+	inGroup, err := hyperv.IsCurrentUserInHyperVAdminGroup()
+	if err != nil {
+		logrus.Debugf("Failed to check Hyper-V Administrators group membership via group database: %v", err)
+	} else if inGroup {
 		fmt.Println("User is already a member of the Hyper-V Administrators group")
 		return nil
 	}
+
 	u, err := user.Current()
 	if err != nil {
-		return fmt.Errorf("failed to get current user: %w", err)
+		return fmt.Errorf("failed to get current user (the user profile may not be loaded): %w", err)
 	}
 	if err := hyperv.AddUserToHyperVAdminGroup(u.Username); err != nil {
 		return fmt.Errorf("failed to add user to Hyper-V Administrators group: %w", err)

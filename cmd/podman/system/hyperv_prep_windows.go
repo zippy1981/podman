@@ -131,6 +131,7 @@ func doPreparationForRegistries() error {
 }
 
 func doPreparationForGroupMembership() error {
+	printHypervPrepDiagnostics()
 	if hyperv.IsHyperVAdminsGroupMember() {
 		fmt.Println("User is already a member of the Hyper-V Administrators group")
 		return nil
@@ -139,6 +140,7 @@ func doPreparationForGroupMembership() error {
 	if err != nil {
 		return fmt.Errorf("failed to get current user: %w", err)
 	}
+	diag("AddUserToHyperVAdminGroup(%q)", u.Username)
 	if err := hyperv.AddUserToHyperVAdminGroup(u.Username); err != nil {
 		return fmt.Errorf("failed to add user to Hyper-V Administrators group: %w", err)
 	}
